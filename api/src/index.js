@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { ApolloServer, gql } = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached');
+const axios = require('axios');
 
 mongoose
   .connect(
@@ -19,37 +20,34 @@ app.use((_, res, next) => {
   return next();
 });
 
-const books = [
-  {
-    title: 'Harry Potter and the Chamber of Secrets',
-    author: 'J.K. Rowling',
-  },
-  {
-    title: 'Jurassic Park',
-    author: 'Michael Crichton',
-  },
-];
-
 const typeDefs = gql`
-  # Comments in GraphQL are defined with the hash (#) symbol.
-
-  # This "Book" type can be used in other type declarations.
-  type Book {
-    title: String
-    author: String
+  type Repositories {
+    name: String
   }
 
   type Query {
-    books: [Book]
+    repositories: [Repositories]
   }
 `;
 
 const resolvers = {
   Query: {
-    books: () => {
-      fetch('https://api.github.com/graphql')
-        .then(res => res.json())
-        .then(data => data)
+    repositories: (name = 'vue') => {
+      const payload = JSON.stringify({ query: `{ repository(owner: "octocat", name: "Hello-World") { issues(last:20) { edges { node { title } } } }  }` });
+      const config = {
+        headers: {
+          'Authorization': 'Bearer 886164b8c3c7a87d5dddf5b04f3defd3fe0b413c'
+        }
+      };
+      axios.post('https://api.github.com/graphql', payload, config)
+        .then(({ data }) => {
+          console.log(data, ':111');
+          return data;
+        })
+        .catch(err => {
+          console.error(err, ':222');
+          return err;
+        })
     },
   },
 };
@@ -59,7 +57,6 @@ const resolvers = {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  mocks: true,
   persistedQueries: {
     cache: new MemcachedCache(
       ['memcached-server-1', 'memcached-server-2', 'memcached-server-3'],
