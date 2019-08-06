@@ -1,0 +1,6 @@
+/api/data
+/api/node_modules
+/front/node_modules
+/api/.vscode
+/.vscode
+/front/.vscode

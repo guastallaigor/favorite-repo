@@ -1,0 +1,51 @@
+version: "3"
+networks:
+  favorite:
+    driver: bridge
+services:
+  api:
+    container_name: api
+    restart: always
+    build: ./api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/app
+    links:
+      - mongo
+    depends_on:
+      - mongo
+    networks:
+      - favorite
+    command: /bin/sh -c "node_modules/.bin/nodemon --exec npm run dev"
+  mongo:
+    image: mongo:latest
+    container_name: "mongo"
+    environment:
+      - MONGODB_USER="zxckjasdqwuxzckjna" 
+      - MONGODB_PASS="alkasnd@#@!@#asdkn123"
+      - MONGO_DATA_DIR=/data/db
+      - MONGO_LOG_DIR=/dev/null
+    volumes:
+      - ./api/data/db:/data/db
+    ports:
+        - 27017:27017
+    command: mongod --smallfiles --logpath=/dev/null # --quiet
+    networks:
+      - favorite
+  # vue:
+  #   build: ./front
+  #   container_name: "vue"
+  #   user: "node"
+  #   working_dir: /home/node/app
+  #   volumes:
+  #     - ./front:/home/node/app/
+  #   ports:
+  #     - "8080:8080"    
+  #   command: /bin/sh -c "npm install && npm run dev"
+  #   networks: 
+  #     - favorite
+volumes:
+  mongodata:
+    external: false
+
