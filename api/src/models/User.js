@@ -4,7 +4,14 @@ const UserSchema = new Schema({
   name: {
     type: String,
     required: true
-  }
+  },
+  repositories: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'Repositories'
+    }
+  ]
+
 }, {
   timestamps: true
 }

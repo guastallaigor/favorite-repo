@@ -22,7 +22,15 @@ app.use((_, res, next) => {
 
 const typeDefs = gql`
   type Repositories {
-    name: String
+    full_name: String,
+    html_url: String,
+    description: String,
+    stargazers_count: String,
+    watchers_count: String,
+    forks_count: String,
+    homepage: String,
+    language: String,
+    open_issues: String
   }
 
   type Query {
@@ -32,22 +40,10 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    repositories: (name = 'vue') => {
-      const payload = JSON.stringify({ query: `{ repository(owner: "octocat", name: "Hello-World") { issues(last:20) { edges { node { title } } } }  }` });
-      const config = {
-        headers: {
-          'Authorization': 'Bearer 886164b8c3c7a87d5dddf5b04f3defd3fe0b413c'
-        }
-      };
-      axios.post('https://api.github.com/graphql', payload, config)
-        .then(({ data }) => {
-          console.log(data, ':111');
-          return data;
-        })
-        .catch(err => {
-          console.error(err, ':222');
-          return err;
-        })
+    repositories: async () => {
+      const params = { page: 1, per_page: 9, q: 'vuejs' };
+      const { data } = await axios.get('https://api.github.com/search/repositories', { params });
+      return data.items;
     },
   },
 };
