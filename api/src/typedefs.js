@@ -1,4 +1,4 @@
-const { gql } = require('apollo-server-express')
+const { gql } = require('apollo-server-express');
 
 const typeDefs = gql`
   interface IResponse {
@@ -30,6 +30,6 @@ const typeDefs = gql`
   type Query {
     getRepositories(name: String, page: Int): RepositoriesResponse
   }
-`
+`;
 
-module.exports = typeDefs
+module.exports = typeDefs;

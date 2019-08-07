@@ -1,24 +1,24 @@
-require('dotenv').config()
-const mongoose = require('mongoose')
-const express = require('express')
-const cors = require('cors')
-const { ApolloServer } = require('apollo-server-express')
-const { MemcachedCache } = require('apollo-server-cache-memcached')
-const typeDefs = require('./typedefs')
-const getRepositories = require('./domains/repositories/RepositoriesResolvers')
-const GitHubStrategy = require('passport-github2').Strategy
-const passport = require('passport')
-const bodyParser = require('body-parser')
-const expressSession = require('express-session')
-const User = require('./domains/user/UserModel')
+require('dotenv').config();
+const mongoose = require('mongoose');
+const express = require('express');
+const cors = require('cors');
+const { ApolloServer } = require('apollo-server-express');
+const { MemcachedCache } = require('apollo-server-cache-memcached');
+const typeDefs = require('./typedefs');
+const getRepositories = require('./domains/repositories/RepositoriesResolvers');
+const GitHubStrategy = require('passport-github2').Strategy;
+const passport = require('passport');
+const bodyParser = require('body-parser');
+const expressSession = require('express-session');
+const User = require('./domains/user/UserModel');
 
 passport.serializeUser(function(user, done) {
-  done(null, user)
-})
+  done(null, user);
+});
 
 passport.deserializeUser(function(obj, done) {
-  done(null, obj)
-})
+  done(null, obj);
+});
 
 passport.use(
   new GitHubStrategy(
@@ -28,9 +28,9 @@ passport.use(
       callbackURL: process.env.CALL_BACK_URL,
     },
     function(accessToken, refreshToken, profile, done) {
-      console.log(profile, ':1')
+      console.log(profile, ':1');
       process.nextTick(function() {
-        console.log(profile, ':2')
+        console.log(profile, ':2');
         User.findOrCreate(
           {
             login: profile.login,
@@ -43,50 +43,50 @@ passport.use(
           },
           function(err, user) {
             if (err) {
-              return done(err)
+              return done(err);
             }
             if (!user) {
-              return done(null, false)
+              return done(null, false);
             }
-            return done(null, user)
+            return done(null, user);
           }
-        )
-        return done(null, false)
-      })
+        );
+        return done(null, false);
+      });
     }
   )
-)
+);
 
 mongoose
   .connect(process.env.DB_CONNECTION, { useNewUrlParser: true })
   .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err))
+  .catch(err => console.log(err));
 
-const app = express()
-app.use(bodyParser.urlencoded({ extended: true }))
+const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   expressSession({
     secret: process.env.CLIENT_SECRET,
     resave: true,
     saveUninitialized: true,
   })
-)
-app.use(passport.initialize())
-app.use(passport.session())
-app.use(cors())
+);
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(cors());
 
 app.use((_, res, next) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
-  return next()
-})
-app.use(express.json())
-app.use(require('./routes'))
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  return next();
+});
+app.use(express.json());
+app.use(require('./routes'));
 
 const resolvers = {
   Query: {
     getRepositories,
   },
-}
+};
 
 const apollo = new ApolloServer({
   typeDefs,
@@ -100,10 +100,10 @@ const apollo = new ApolloServer({
   resolverValidationOptions: {
     requireResolversForResolveType: false,
   },
-})
+});
 
-apollo.applyMiddleware({ app })
+apollo.applyMiddleware({ app });
 
 app.listen({ port: 3000 }, () =>
   console.log(`🚀 Server ready at http://localhost:3000`)
-)
+);
