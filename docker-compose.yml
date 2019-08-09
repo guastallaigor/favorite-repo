@@ -3,14 +3,14 @@ networks:
   favorite:
     driver: bridge
 services:
-  api:
-    container_name: api
+  backend:
+    container_name: backend
     restart: always
-    build: ./api
+    build: ./backend
     ports:
       - "3000:3000"
     volumes:
-      - ./api:/app
+      - ./backend:/app
     links:
       - mongo
     depends_on:
@@ -27,7 +27,7 @@ services:
       - MONGO_DATA_DIR=/data/db
       - MONGO_LOG_DIR=/dev/null
     volumes:
-      - ./api/data/db:/data/db
+      - ./backend/data/db:/data/db
     ports:
         - 27017:27017
     command: mongod --smallfiles --logpath=/dev/null # --quiet

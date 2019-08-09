@@ -1,7 +1,7 @@
-/api/data
-/api/node_modules
+/backend/data
+/backend/node_modules
 /front/node_modules
-/api/.vscode
+/backend/.vscode
 /.vscode
 /front/.vscode
-/api/.env
+/backend/.env

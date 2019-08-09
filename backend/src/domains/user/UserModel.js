@@ -29,13 +29,7 @@ const UserSchema = new Schema(
     avatar_url: {
       type: String,
       required: true,
-    },
-    groups: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: 'Groups',
-      },
-    ],
+    }
   },
   {
     timestamps: true,

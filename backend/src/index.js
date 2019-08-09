@@ -6,6 +6,7 @@ const { ApolloServer } = require('apollo-server-express');
 const { MemcachedCache } = require('apollo-server-cache-memcached');
 const typeDefs = require('./typedefs');
 const getRepositories = require('./domains/repositories/RepositoriesResolvers');
+const saveGroup = require('./domains/groups/GroupsResolvers');
 const GitHubStrategy = require('passport-github2').Strategy;
 const passport = require('passport');
 const bodyParser = require('body-parser');
@@ -31,24 +32,30 @@ passport.use(
       console.log(profile, ':1');
       process.nextTick(function() {
         console.log(profile, ':2');
-        User.findOrCreate(
-          {
-            login: profile.login,
-            name: profile.name,
-            location: profile.location,
-            email: profile.email,
-            company: profile.company,
-            html_url: profile.html_url,
-            avatar_url: profile.avatar_url,
-          },
+        const userObj = {
+          login: profile.login,
+          name: profile.name,
+          location: profile.location,
+          email: profile.email,
+          company: profile.company,
+          html_url: profile.html_url,
+          avatar_url: profile.avatar_url,
+        };
+        User.findOne(userObj,
           function(err, user) {
             if (err) {
               return done(err);
             }
             if (!user) {
-              return done(null, false);
+              User.create(userObj, function(err, userCallback) {
+                if (err) {
+                  return done(err);
+                }
+
+                return done(null, userCallback);
+              });
             }
-            return done(null, user);
+            return done(null, false);
           }
         );
         return done(null, false);
@@ -86,6 +93,9 @@ const resolvers = {
   Query: {
     getRepositories,
   },
+  Mutation: {
+    saveGroup
+  }
 };
 
 const apollo = new ApolloServer({
@@ -99,6 +109,9 @@ const apollo = new ApolloServer({
   },
   resolverValidationOptions: {
     requireResolversForResolveType: false,
+  },
+  context: (all) => {
+    // console.log(all)
   },
 });
 

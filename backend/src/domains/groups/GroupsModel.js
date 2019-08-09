@@ -11,7 +11,11 @@ const GroupsSchema = new Schema(
         type: Schema.Types.ObjectId,
         ref: 'Repositories'
       }
-    ]
+    ],
+    user: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   {
     timestamps: true,
