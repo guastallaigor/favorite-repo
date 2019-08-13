@@ -14,7 +14,7 @@ export default function Login({ history }) {
   async function login(e) {
     e.preventDefault();
 
-    window.open('http://localhost:3000/auth/github', '_blank');
+    window.open('http://localhost:3000/auth/github', '_self');
   }
 
   return (

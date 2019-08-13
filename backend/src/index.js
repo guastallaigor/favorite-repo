@@ -13,12 +13,18 @@ const bodyParser = require('body-parser');
 const expressSession = require('express-session');
 const User = require('./domains/user/UserModel');
 
-passport.serializeUser(function(user, done) {
-  done(null, user);
+passport.serializeUser((user, done) => {
+  done(null, user && user.id ? user.id : user);
 });
 
-passport.deserializeUser(function(obj, done) {
-  done(null, obj);
+passport.deserializeUser((id, done) => {
+  User.findById(id)
+    .then(user => {
+      done(null, user);
+    })
+    .catch(e => {
+      done(new Error("Failed to deserialize an user"));
+    });
 });
 
 passport.use(
@@ -29,33 +35,27 @@ passport.use(
       callbackURL: process.env.CALL_BACK_URL,
     },
     function(accessToken, refreshToken, profile, done) {
-      console.log(profile, ':1');
       process.nextTick(function() {
-        console.log(profile, ':2');
+        const profileJson = profile._json
         const userObj = {
-          login: profile.login,
-          name: profile.name,
-          location: profile.location,
-          email: profile.email,
-          company: profile.company,
-          html_url: profile.html_url,
-          avatar_url: profile.avatar_url,
+          login: profileJson.login,
+          name: profileJson.name,
+          location: profileJson.location,
+          email: profileJson.email,
+          company: profileJson.company,
+          html_url: profileJson.html_url,
+          avatar_url: profileJson.avatar_url,
         };
-        User.findOne(userObj,
-          function(err, user) {
+        User.findOne({ login: userObj.login },
+          async function(err, user) {
             if (err) {
               return done(err);
             }
             if (!user) {
-              User.create(userObj, function(err, userCallback) {
-                if (err) {
-                  return done(err);
-                }
-
-                return done(null, userCallback);
-              });
+              await new User(userObj).save();
+              return done(null, true);
             }
-            return done(null, false);
+            return done(null, true);
           }
         );
         return done(null, false);
@@ -80,7 +80,11 @@ app.use(
 );
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:8080',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
+}));
 
 app.use((_, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
