@@ -14,16 +14,18 @@ const expressSession = require('express-session');
 const User = require('./domains/user/UserModel');
 
 passport.serializeUser((user, done) => {
+  console.log(user, ':user');
   done(null, user && user.id ? user.id : user);
 });
 
 passport.deserializeUser((id, done) => {
+  console.log(id, ':id');
   User.findById(id)
     .then(user => {
       done(null, user);
     })
     .catch(e => {
-      done(new Error("Failed to deserialize an user"));
+      done(new Error('Failed to deserialize an user'));
     });
 });
 
@@ -34,30 +36,17 @@ passport.use(
       clientSecret: process.env.CLIENT_SECRET,
       callbackURL: process.env.CALL_BACK_URL,
     },
-    function(accessToken, refreshToken, profile, done) {
-      process.nextTick(function() {
-        const profileJson = profile._json
-        const userObj = {
-          login: profileJson.login,
-          name: profileJson.name,
-          location: profileJson.location,
-          email: profileJson.email,
-          company: profileJson.company,
-          html_url: profileJson.html_url,
-          avatar_url: profileJson.avatar_url,
-        };
-        User.findOne({ login: userObj.login },
-          async function(err, user) {
-            if (err) {
-              return done(err);
-            }
-            if (!user) {
-              await new User(userObj).save();
-              return done(null, true);
-            }
-            return done(null, true);
-          }
-        );
+    async (accessToken, refreshToken, profile, done) => {
+      await process.nextTick(async () => {
+        const { login, name, location, email, company, html_url, avatar_url } = profile._json;
+        const userObj = { login, name, location, email, company, html_url, avatar_url };
+        const user = await User.findOne({ login: userObj.login });
+
+        if (!user) {
+          await new User(userObj).save();
+          return done(null, true);
+        }
+
         return done(null, false);
       });
     }
@@ -114,8 +103,8 @@ const apollo = new ApolloServer({
   resolverValidationOptions: {
     requireResolversForResolveType: false,
   },
-  context: (all) => {
-    // console.log(all)
+  context: ({ req }) => {
+    console.log(req.user, ':req.user')
   },
 });
 
