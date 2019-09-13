@@ -11,7 +11,8 @@ routes.get('/login/failed', (req, res) => {
 
 routes.get('/auth/github', passport.authenticate('github', { scope: ['user:email'] }),
   function(req, res) {
-    console.log('auth!');
+    console.log(req, ':reqfirst');
+    console.log(res, ':resfirst');
   }
 );
 
@@ -22,7 +23,8 @@ routes.get(
     failureRedirect: process.env.FAILURE_REDIRECT,
   }),
   function(req, res) {
-    console.log('success!!!!!');
+    console.log(req, ':req');
+    console.log(res, ':res');
     res.redirect(process.env.SUCCESS_REDIRECT);
   }
 );

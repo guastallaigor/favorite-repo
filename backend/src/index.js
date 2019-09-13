@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
 const { ApolloServer } = require('apollo-server-express');
-const { MemcachedCache } = require('apollo-server-cache-memcached');
 const typeDefs = require('./typedefs');
 const getRepositories = require('./domains/repositories/RepositoriesResolvers');
 const saveGroup = require('./domains/groups/GroupsResolvers');
@@ -11,23 +10,8 @@ const GitHubStrategy = require('passport-github2').Strategy;
 const passport = require('passport');
 const bodyParser = require('body-parser');
 const expressSession = require('express-session');
+const MongoStore = require('connect-mongo')(expressSession);
 const User = require('./domains/user/UserModel');
-
-passport.serializeUser((user, done) => {
-  console.log(user, ':user');
-  done(null, user && user.id ? user.id : user);
-});
-
-passport.deserializeUser((id, done) => {
-  console.log(id, ':id');
-  User.findById(id)
-    .then(user => {
-      done(null, user);
-    })
-    .catch(e => {
-      done(new Error('Failed to deserialize an user'));
-    });
-});
 
 passport.use(
   new GitHubStrategy(
@@ -40,18 +24,35 @@ passport.use(
       await process.nextTick(async () => {
         const { login, name, location, email, company, html_url, avatar_url } = profile._json;
         const userObj = { login, name, location, email, company, html_url, avatar_url };
-        const user = await User.findOne({ login: userObj.login });
+        let user = await User.findOne({ login: userObj.login });
 
         if (!user) {
-          await new User(userObj).save();
-          return done(null, true);
+          user = await new User(userObj).save();
+          return done(null, user);
         }
 
-        return done(null, false);
+        return done(null, user);
       });
     }
   )
 );
+
+passport.serializeUser((user, done) => {
+  done(null, user && user.id ? user.id : user);
+});
+
+passport.deserializeUser((id, done) => {
+  if (id !== true && id !== false) {
+    User.findById(id)
+      .then(user => {
+        done(null, user);
+      })
+      .catch(e => {
+        done(new Error('Failed to deserialize an user'));
+      });
+  }
+  done(null, true);
+});
 
 mongoose
   .connect(process.env.DB_CONNECTION, { useNewUrlParser: true })
@@ -63,8 +64,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   expressSession({
     secret: process.env.CLIENT_SECRET,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      secure: false
+    },
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection
+    })
   })
 );
 app.use(passport.initialize());
@@ -94,12 +102,6 @@ const resolvers = {
 const apollo = new ApolloServer({
   typeDefs,
   resolvers,
-  persistedQueries: {
-    cache: new MemcachedCache(
-      ['memcached-server-1', 'memcached-server-2', 'memcached-server-3'],
-      { retries: 10, retry: 10000 }
-    ),
-  },
   resolverValidationOptions: {
     requireResolversForResolveType: false,
   },
