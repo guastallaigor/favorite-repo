@@ -1,16 +1,7 @@
 import React from 'react';
 import './Login.css';
-import LoginService from '../../services/LoginService';
 
-export default function Login({ history }) {
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    const response = await LoginService.login();
-    const { _id } = response.data;
-    history.push(`/dev/${_id}`);
-  }
-
+export default function Login() {
   async function login(e) {
     e.preventDefault();
 
