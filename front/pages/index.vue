@@ -1,15 +1,9 @@
 <template>
-  <div><button type="button" @click="login">Login</button></div>
+  <div><a href="http://localhost:3000/auth/github">Login</a></div>
 </template>
 
 <script>
-export default {
-  methods: {
-    login() {
-      window.open('http://localhost:3000/auth/github')
-    }
-  }
-}
+export default {}
 </script>
 
 <style></style>

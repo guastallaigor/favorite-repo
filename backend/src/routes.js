@@ -11,29 +11,31 @@ routes.get('/login/failed', (req, res) => {
 
 routes.get(
   '/auth/github',
-  passport.authenticate('github', { scope: ['user:email'] }),
-  function(req, res) {
-    console.log(req, ':reqfirst');
-    console.log(res, ':resfirst');
-  }
+  passport.authenticate('github', { session: false, scope: ['user:email'] }),
+  function(req, res) {}
 );
 
 routes.get(
   '/auth/github/callback',
   passport.authenticate('github', {
-    successRedirect: process.env.SUCCESS_REDIRECT,
     failureRedirect: process.env.FAILURE_REDIRECT,
   }),
   function(req, res) {
-    console.log(req.user, ':req');
-    res.redirect(
-      process.env.SUCCESS_REDIRECT + '?access_token=' + req.user.accessToken
-    );
+    let redirect = process.env.SUCCESS_REDIRECT;
+
+    if (req.user && req.user.accessToken) {
+      redirect += '?access_token=' + req.user.accessToken;
+
+      if (req.user.refreshToken) {
+        redirect += '&refresh_token=' + req.user.refreshToken;
+      }
+    }
+
+    res.redirect(redirect);
   }
 );
 
 routes.get('/logout', function(req, res) {
-  console.log('logout');
   req.logout();
   res.redirect(process.env.LOGOUT_REDIRECT);
 });

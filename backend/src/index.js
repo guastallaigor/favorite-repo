@@ -44,13 +44,15 @@ passport.use(
 
         if (!user) {
           user = await new User(userObj).save();
-          user.accessToken = accessToken;
-          user.refreshToken = refreshToken;
-          return done(null, user);
         }
 
-        user.accessToken = accessToken;
-        user.refreshToken = refreshToken;
+        if (accessToken) {
+          user.accessToken = accessToken;
+        }
+
+        if (refreshToken) {
+          user.refreshToken = refreshToken;
+        }
 
         return done(null, user);
       });
