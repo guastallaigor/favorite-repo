@@ -22,14 +22,35 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       await process.nextTick(async () => {
-        const { login, name, location, email, company, html_url, avatar_url } = profile._json;
-        const userObj = { login, name, location, email, company, html_url, avatar_url };
+        const {
+          login,
+          name,
+          location,
+          email,
+          company,
+          html_url,
+          avatar_url,
+        } = profile._json;
+        const userObj = {
+          login,
+          name,
+          location,
+          email,
+          company,
+          html_url,
+          avatar_url,
+        };
         let user = await User.findOne({ login: userObj.login });
 
         if (!user) {
           user = await new User(userObj).save();
+          user.accessToken = accessToken;
+          user.refreshToken = refreshToken;
           return done(null, user);
         }
+
+        user.accessToken = accessToken;
+        user.refreshToken = refreshToken;
 
         return done(null, user);
       });
@@ -68,20 +89,22 @@ app.use(
     saveUninitialized: false,
     cookie: {
       maxAge: 1000 * 60 * 60 * 24 * 7,
-      secure: false
+      secure: false,
     },
     store: new MongoStore({
-      mongooseConnection: mongoose.connection
-    })
+      mongooseConnection: mongoose.connection,
+    }),
   })
 );
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(cors({
-  origin: 'http://localhost:8080',
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:8080',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  })
+);
 
 app.use((_, res, next) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -95,8 +118,8 @@ const resolvers = {
     getRepositories,
   },
   Mutation: {
-    saveGroup
-  }
+    saveGroup,
+  },
 };
 
 const apollo = new ApolloServer({
@@ -106,7 +129,7 @@ const apollo = new ApolloServer({
     requireResolversForResolveType: false,
   },
   context: ({ req }) => {
-    console.log(req.user, ':req.user')
+    console.log(req.user, ':req.user');
   },
 });
 

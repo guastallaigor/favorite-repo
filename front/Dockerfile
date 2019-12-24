@@ -1,16 +1,23 @@
-# base image
-FROM node:12.2.0-alpine
+FROM node:12.10.0-alpine
 
-# set working directory
+LABEL maintainer="Igor Guastalla de Lima (limguastallaigor@gmail.com)"
+
+# Add git as the prebuild target requires it to parse version information
+RUN apk add --update --no-cache \
+  git
+
 WORKDIR /app
 
-# add `/app/node_modules/.bin` to $PATH
-ENV PATH /app/node_modules/.bin:$PATH
+COPY package*.json ./
 
-# install and cache app dependencies
-COPY package.json /app/package.json
-RUN npm install --silent
-RUN npm install react-scripts -g --silent
+RUN npm install
 
-# start app
-CMD ["npm", "start"]
+COPY . .
+
+RUN npm run build
+
+ENV HOST 0.0.0.0
+
+EXPOSE 3000
+
+CMD ["npm", "run", "start"]

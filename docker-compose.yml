@@ -35,21 +35,24 @@ services:
       - favorite
   front:
     container_name: front
+    working_dir: /app
     build:
       context: ./front
       dockerfile: Dockerfile
+    # volumes:
+    #   - "./front:/app"
+    #   - "/app/node_modules"
     volumes:
-      - "./front:/app"
-      - "/app/node_modules"
-    command: /bin/sh -c "npm install && npm start"
+      - "./front:/app/front"
+    command: /bin/sh -c "cd front && npm run dev"
     networks:
       - favorite
     depends_on:
       - backend
     ports:
       - "8080:3000"
-    environment:
-      - NODE_ENV=development
+    # environment:
+    #   - NODE_ENV=development
 volumes:
   mongodata:
     external: false
